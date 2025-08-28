@@ -5,6 +5,7 @@ import joblib
 from tensorflow.keras.models import load_model
 from datetime import date
 import os
+import matplotlib.pyplot as plt
 
 # Load model and scalers
 model = load_model("lstm_co2_predictor.h5", compile=False)
@@ -76,39 +77,42 @@ if len(df) >= TIME_STEPS:
 
     actual_vals = []
     predicted_vals = []
+    days_index = []
 
     for i in range(TIME_STEPS, len(df)):
-        # Prepare input sequence for prediction
         seq = df[["Fuel_Used_Liters", "Coal_Mined_Tonnes"]].iloc[i - TIME_STEPS:i].values
         seq_scaled = scaler_x.transform(seq).reshape(1, TIME_STEPS, 2)
         pred_scaled = model.predict(seq_scaled)
         pred = scaler_y.inverse_transform(pred_scaled)[0][0]
         predicted_vals.append(pred)
 
-        # Compute actual CO₂ (fuel + coal)
+        # actual emission
         fuel_co2 = df["Fuel_Used_Liters"].iloc[i] * CO2_PER_LITER_DIESEL
         coal_co2 = df["Coal_Mined_Tonnes"].iloc[i] * CO2_PER_TONNE_COAL
         actual = fuel_co2 + coal_co2
         actual_vals.append(actual)
 
-    # Summary metrics
+        days_index.append(df["Date"].iloc[i])   # keep correct date labels
+
+    # --- Take last 30 days ---
+    recent_actual = actual_vals[-30:]
+    recent_predicted = predicted_vals[-30:]
+    recent_days = days_index[-30:]
+
+    # --- Summary Stats ---
     st.markdown("### 📈 Last 30 Days CO₂ Stats")
-    recent_actual = actual_vals[-30:] if len(actual_vals) >= 30 else actual_vals
-    recent_predicted = predicted_vals[-30:] if len(predicted_vals) >= 30 else predicted_vals
-
     col1, col2, col3 = st.columns(3)
-    col1.metric("Avg Actual (kg)", f"{(np.mean(recent_actual)/2):,.2f}")
-    col2.metric("Avg Predicted (kg)", f"{np.mean(recent_predicted):,.2f}")
-    col3.metric("Total Actual", f"{(np.sum(recent_actual)/2):,.2f} kg")
+    col1.metric("Avg Actual (kg)", f"{float(np.mean(recent_actual)) :,.2f}")
+    col2.metric("Avg Predicted (kg)", f"{float(np.mean(recent_predicted)) :,.2f}")
+    col3.metric("Total Actual (kg)", f"{float(np.sum(recent_actual)) :,.1f}")
 
-    # # Plot trend
-    # import matplotlib.pyplot as plt
-    # fig, ax = plt.subplots(figsize=(10, 4))
-    # ax.plot([actual_vals[-30:]], label="Actual (Fuel + Coal)", linestyle="--")  # ÷2 applied
-    # ax.plot([val/2 for val in predicted_vals[-30:]], label="Predicted (LSTM)", linewidth=2)
-    # ax.set_xlabel("Days")
-    # ax.set_ylabel("CO₂ Emitted (kg)")
-    # ax.set_title("CO₂ Emission Trend – Last 30 Days")
-    # ax.legend()
-    # st.pyplot(fig)
-
+    # --- Plot Graph with Date axis ---
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(recent_days, recent_actual, label="Actual (Fuel + Coal)", linestyle="--", marker="o")
+    ax.plot(recent_days, recent_predicted, label="Predicted (LSTM)", linewidth=2, marker="x")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("CO₂ Emitted (kg)")
+    ax.set_title("CO₂ Emission Trend – Last 30 Days")
+    plt.xticks(rotation=45)
+    ax.legend()
+    st.pyplot(fig)
