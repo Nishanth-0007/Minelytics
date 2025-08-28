@@ -15,3 +15,4 @@ Data Preprocessing is completed for the soil images dataset and data split is be
 Week - 3:
 LSTM model is built and trained on the fuel used, coal mined and carbon emitted dataset. The model is saved as `lstm_co2_predictor.h5`.
 
+some changes to LSTM model to improve accuracy and reduce loss were done. Now the model is working fine with good accuracy and low loss. Chnages to week 3 code.
