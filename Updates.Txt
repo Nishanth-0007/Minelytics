@@ -16,3 +16,12 @@ Week - 3:
 LSTM model is built and trained on the fuel used, coal mined and carbon emitted dataset. The model is saved as `lstm_co2_predictor.h5`.
 
 some changes to LSTM model to improve accuracy and reduce loss were done. Now the model is working fine with good accuracy and low loss. Chnages to week 3 code.
+
+Week - 4, 5 & 6:
+Building CNN Model and Prediction System for soil images dataset. 
+    a) Building CNN model
+    b) Training and evaluating the model
+    c) Saving the model as `soil_cnn_model.h5`
+    d) Building prediction system using the saved model
+    e) Testing the prediction system with custom images
+
